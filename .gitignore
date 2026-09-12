@@ -1,0 +1,9 @@
+# Environment & Secrets (Rule 1)
+.env*
+!.env.example
+
+# OS & Build Files
+.DS_Store
+*.log
+.vercel
+node_modules/

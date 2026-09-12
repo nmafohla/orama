@@ -1,0 +1,6 @@
+# Robots.txt for Orama Media
+User-agent: *
+Allow: /
+
+# Sitemap Location
+Sitemap: https://orama-media.vercel.app/sitemap.xml
