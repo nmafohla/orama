@@ -63,6 +63,8 @@ function initFormSubmissions() {
         if (msgInput) formData.append('message', msgInput.value);
       }
 
+      let successMsg = 'Thank you! Your enquiry has been sent directly to hello@oramamedia.co.zw. Our team will contact you within 12 hours.';
+
       try {
         const response = await fetch('contact.php', {
           method: 'POST',
@@ -71,29 +73,61 @@ function initFormSubmissions() {
         
         if (response.ok) {
           const result = await response.json().catch(() => ({}));
-          alert(result.message || 'Thank you! Your enquiry has been sent to hello@oramamedia.co.zw.');
-        } else {
-          alert('Thank you! Your enquiry has been dispatched to hello@oramamedia.co.zw.');
+          if (result.message) successMsg = result.message;
         }
       } catch (err) {
-        alert('Thank you! Your enquiry has been submitted to hello@oramamedia.co.zw. Our team will contact you within 12 hours.');
+        // Fallback success message
       } finally {
-        form.reset();
-        if (typeof grecaptcha !== 'undefined') {
-          try { grecaptcha.reset(); } catch(e) {}
-        }
-        const dialog = form.closest('dialog');
-        if (dialog) {
-          dialog.close();
-          document.body.style.overflow = '';
-        }
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.textContent = originalText;
         }
+
+        const dialog = form.closest('dialog');
+        if (dialog) {
+          dialog.close();
+          document.body.style.overflow = '';
+          alert(successMsg);
+        } else {
+          showInlineFormSuccess(form, successMsg);
+        }
       }
     });
   });
+}
+
+function showInlineFormSuccess(form, msgText) {
+  let successContainer = form.parentNode.querySelector('.form-success-message');
+  if (!successContainer) {
+    successContainer = document.createElement('div');
+    successContainer.className = 'form-success-message card';
+    successContainer.style.cssText = 'padding: 3.5rem 2rem; text-align: center; background: rgba(0, 88, 64, 0.2); border: 1px solid var(--color-accent); border-radius: var(--border-radius-md); width: 100%; margin: 1rem 0; animation: fadeIn 0.4s ease-out;';
+    form.parentNode.insertBefore(successContainer, form);
+  }
+  
+  successContainer.innerHTML = `
+    <div style="width: 64px; height: 64px; margin: 0 auto 1.5rem auto; background: rgba(209, 248, 67, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid var(--color-accent);">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h3 style="font-size: 1.5rem; color: var(--color-white); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Enquiry Received</h3>
+    <p style="font-size: 0.95rem; color: var(--color-grey); margin-bottom: 2rem; line-height: 1.6; max-width: 480px; margin-left: auto; margin-right: auto;">${msgText}</p>
+    <button type="button" class="btn btn--outline btn--reset-form" style="font-size: 0.85rem; padding: 0.75rem 1.5rem;">Send Another Message</button>
+  `;
+
+  form.style.display = 'none';
+
+  const resetBtn = successContainer.querySelector('.btn--reset-form');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      form.reset();
+      if (typeof grecaptcha !== 'undefined') {
+        try { grecaptcha.reset(); } catch(e) {}
+      }
+      form.style.display = 'flex';
+      form.style.flexDirection = 'column';
+      successContainer.remove();
+    });
+  }
 }
 
 /* ----------------------------------------------------
