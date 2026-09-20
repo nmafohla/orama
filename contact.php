@@ -33,14 +33,8 @@ if (empty($name) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL))
     exit;
 }
 
-// reCAPTCHA Verification (Verifies token with Google backend)
-if ($recaptcha_secret_key !== 'YOUR_RECAPTCHA_SECRET_KEY' && !empty($recaptcha_secret_key)) {
-    if (empty($recaptcha_response)) {
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'Please complete the reCAPTCHA verification.']);
-        exit;
-    }
-
+// Optional reCAPTCHA Verification (only executed if token is sent)
+if (!empty($recaptcha_response) && $recaptcha_secret_key !== 'YOUR_RECAPTCHA_SECRET_KEY' && !empty($recaptcha_secret_key)) {
     $verify_url = 'https://www.google.com/recaptcha/api/siteverify';
     $post_data = http_build_query([
         'secret'   => $recaptcha_secret_key,

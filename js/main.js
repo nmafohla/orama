@@ -7,22 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initPortfolioFilter();
   initIntersectionObserverFallback();
   initFormSubmissions();
-  initLazyRecaptcha();
 });
-
-/* Dynamic Lazy Loader for reCAPTCHA to prevent 335KB unused JS penalty on initial load */
-function initLazyRecaptcha() {
-  const triggerRecaptcha = () => {
-    if (window.grecaptcha || document.querySelector('script[src*="recaptcha"]')) return;
-    const script = document.createElement('script');
-    script.src = 'https://www.google.com/recaptcha/api.js';
-    script.async = true;
-    script.defer = true;
-    document.head.appendChild(script);
-    ['touchstart', 'scroll', 'mousemove', 'keydown'].forEach(evt => window.removeEventListener(evt, triggerRecaptcha));
-  };
-  ['touchstart', 'scroll', 'mousemove', 'keydown'].forEach(evt => window.addEventListener(evt, triggerRecaptcha, { passive: true, once: true }));
-}
 
 /* ----------------------------------------------------
    FORM SUBMISSION HANDLER (Sends to hello@oramamedia.co.zw)
