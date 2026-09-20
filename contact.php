@@ -9,7 +9,7 @@ header('Content-Type: application/json; charset=utf-8');
 // Configuration
 $to_email = 'hello@oramamedia.co.zw';
 $site_name = 'Orama Media Website';
-$recaptcha_secret_key = getenv('RECAPTCHA_SECRET_KEY') ?: 'YOUR_RECAPTCHA_SECRET_KEY'; // Set in cPanel / .env or paste Secret Key here
+$recaptcha_secret_key = getenv('RECAPTCHA_SECRET_KEY') ?: '6LcfMMYtAAAAAGzrfEWcqsVmvsAAtnNUtaVRC5VB'; // Set in cPanel / .env or paste Secret Key here
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
