@@ -9,7 +9,7 @@ header('Content-Type: application/json; charset=utf-8');
 // Configuration
 $to_email = 'hello@oramamedia.co.zw';
 $site_name = 'Orama Media Website';
-$recaptcha_secret_key = 'YOUR_RECAPTCHA_SECRET_KEY'; // Replace with your reCAPTCHA Secret Key
+$recaptcha_secret_key = getenv('RECAPTCHA_SECRET_KEY') ?: 'YOUR_RECAPTCHA_SECRET_KEY'; // Set in cPanel / .env or paste Secret Key here
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -33,16 +33,33 @@ if (empty($name) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL))
     exit;
 }
 
-// Optional reCAPTCHA Verification (if secret key provided)
+// reCAPTCHA Verification (Verifies token with Google backend)
 if ($recaptcha_secret_key !== 'YOUR_RECAPTCHA_SECRET_KEY' && !empty($recaptcha_secret_key)) {
     if (empty($recaptcha_response)) {
         http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'Please complete the reCAPTCHA verification checkbox.']);
+        echo json_encode(['status' => 'error', 'message' => 'Please complete the reCAPTCHA verification.']);
         exit;
     }
 
     $verify_url = 'https://www.google.com/recaptcha/api/siteverify';
-    $response = file_get_contents($verify_url . '?secret=' . $recaptcha_secret_key . '&response=' . $recaptcha_response);
+    $post_data = http_build_query([
+        'secret'   => $recaptcha_secret_key,
+        'response' => $recaptcha_response,
+        'remoteip' => $_SERVER['REMOTE_ADDR'] ?? ''
+    ]);
+
+    $ch = curl_init($verify_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    if (!$response) {
+        $response = @file_get_contents($verify_url . '?' . $post_data);
+    }
+
     $response_data = json_decode($response);
 
     if (!$response_data || !$response_data->success) {
