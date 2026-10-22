@@ -7,3 +7,5 @@
 *.log
 .vercel
 node_modules/
+/.deploy-secrets/
+*.secret
