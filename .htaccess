@@ -11,10 +11,6 @@ AddDefaultCharset UTF-8
   RewriteEngine On
   RewriteBase /
 
-  # Redirect to HTTPS if available
-  # RewriteCond %{HTTPS} off
-  # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-
   # Serve .html without extension
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{REQUEST_FILENAME}\.html -f
@@ -33,6 +29,7 @@ AddDefaultCharset UTF-8
   ExpiresByType image/jpeg "access plus 1 year"
   ExpiresByType image/gif "access plus 1 year"
   ExpiresByType image/png "access plus 1 year"
+  ExpiresByType image/webp "access plus 1 year"
   ExpiresByType image/svg+xml "access plus 1 year"
   ExpiresByType text/css "access plus 1 month"
   ExpiresByType application/pdf "access plus 1 month"
@@ -47,7 +44,8 @@ AddDefaultCharset UTF-8
   Header set X-Content-Type-Options "nosniff"
   Header set X-Frame-Options "SAMEORIGIN"
   Header set X-XSS-Protection "1; mode=block"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 
-# Block access to git metadata (deploy.php is a normal file and is served directly)
+# Block access to git metadata
 RedirectMatch 404 /\.git
