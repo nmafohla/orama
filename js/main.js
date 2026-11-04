@@ -55,13 +55,18 @@ function initFormSubmissions() {
           method: 'POST',
           body: formData
         });
-        
-        if (response.ok) {
-          const result = await response.json().catch(() => ({}));
-          if (result.message) successMsg = result.message;
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result.status === 'error') {
+          throw new Error(result.message || 'Could not send the enquiry.');
         }
+        if (result.message) successMsg = result.message;
       } catch (err) {
-        // Fallback success message
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+        alert(err && err.message ? err.message : 'Could not send the enquiry. Please try again.');
+        return;
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;

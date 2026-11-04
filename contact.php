@@ -1,94 +1,116 @@
 <?php
 /**
- * Orama Media Contact & Enquiry Submission Handler
- * Compatible with cPanel PHP 7.4 / 8.0+
+ * Orama Media enquiry handler.
+ * The reCAPTCHA secret is never stored in this file.
+ * Put it in the server environment as RECAPTCHA_SECRET_KEY,
+ * or in /home/hakilico/.site-private/orama-recaptcha.txt
  */
-
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store');
 
-// Configuration
-$to_email = 'hello@oramamedia.co.zw';
-$site_name = 'Orama Media Website';
-$recaptcha_secret_key = getenv('RECAPTCHA_SECRET_KEY') ?: '6LdBNMYtAAAAADHfDgixLIG8EMfZoWDwZUXd1zSk'; // Set in cPanel / .env or paste Secret Key here
+const TO_EMAIL = 'hello@oramamedia.co.zw';
+const FROM_EMAIL = 'noreply@oramamedia.co.zw';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['status' => 'error', 'message' => 'Method Not Allowed']);
+function orama_fail(int $code, string $msg): void {
+    http_response_code($code);
+    echo json_encode(['status' => 'error', 'message' => $msg]);
     exit;
 }
 
-// Sanitize inputs
-$name    = isset($_POST['name']) ? trim(strip_tags($_POST['name'])) : '';
-$email   = isset($_POST['email']) ? filter_var(trim($_POST['email']), FILTER_SANITIZE_EMAIL) : '';
-$phone   = isset($_POST['phone']) ? trim(strip_tags($_POST['phone'])) : '';
-$service = isset($_POST['service']) ? trim(strip_tags($_POST['service'])) : 'General Enquiry';
-$date    = isset($_POST['date']) ? trim(strip_tags($_POST['date'])) : 'Not specified';
-$message = isset($_POST['message']) ? trim(strip_tags($_POST['message'])) : '';
-$recaptcha_response = isset($_POST['g-recaptcha-response']) ? $_POST['g-recaptcha-response'] : '';
-
-// Validation
-if (empty($name) || empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'Please provide a valid name and email address.']);
-    exit;
-}
-
-// Optional reCAPTCHA Verification (only executed if token is sent)
-if (!empty($recaptcha_response) && $recaptcha_secret_key !== 'YOUR_RECAPTCHA_SECRET_KEY' && !empty($recaptcha_secret_key)) {
-    $verify_url = 'https://www.google.com/recaptcha/api/siteverify';
-    $post_data = http_build_query([
-        'secret'   => $recaptcha_secret_key,
-        'response' => $recaptcha_response,
-        'remoteip' => $_SERVER['REMOTE_ADDR'] ?? ''
-    ]);
-
-    $ch = curl_init($verify_url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-    $response = curl_exec($ch);
-    curl_close($ch);
-
-    if (!$response) {
-        $response = @file_get_contents($verify_url . '?' . $post_data);
+function orama_clean($value, int $max = 2000): string {
+    $value = trim(str_replace(["\r", "\n", "\0"], ' ', (string) $value));
+    $value = trim(strip_tags($value));
+    if (function_exists('mb_substr')) {
+        return mb_substr($value, 0, $max);
     }
+    return substr($value, 0, $max);
+}
 
-    $response_data = json_decode($response);
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+    header('Allow: POST');
+    orama_fail(405, 'Method not allowed');
+}
 
-    if (!$response_data || !$response_data->success) {
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'reCAPTCHA verification failed. Please try again.']);
-        exit;
+$privateDir = '/home/hakilico/.site-private';
+if (!is_dir($privateDir)) {
+    @mkdir($privateDir, 0700, true);
+}
+
+$secret = getenv('RECAPTCHA_SECRET_KEY');
+if (!is_string($secret) || trim($secret) === '') {
+    $secretFile = $privateDir . '/orama-recaptcha.txt';
+    $secret = is_readable($secretFile) ? trim((string) file_get_contents($secretFile)) : '';
+}
+
+$ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+if ($ip !== '' && is_dir($privateDir) && is_writable($privateDir)) {
+    $rateFile = $privateDir . '/orama-rl-' . hash('sha256', $ip);
+    $now = time();
+    $hits = [];
+    if (is_file($rateFile)) {
+        $decoded = json_decode((string) @file_get_contents($rateFile), true);
+        if (is_array($decoded)) {
+            $hits = $decoded;
+        }
+    }
+    $hits = array_values(array_filter($hits, function ($t) use ($now) {
+        return is_int($t) && ($now - $t) < 3600;
+    }));
+    if (count($hits) >= 8) {
+        orama_fail(429, 'Too many enquiries from this network. Please wait and try again.');
+    }
+    $hits[] = $now;
+    @file_put_contents($rateFile, json_encode($hits), LOCK_EX);
+}
+
+$name = orama_clean($_POST['name'] ?? '', 200);
+$email = orama_clean($_POST['email'] ?? '', 200);
+$phone = orama_clean($_POST['phone'] ?? '', 60);
+$service = orama_clean($_POST['service'] ?? 'General Enquiry', 200);
+$date = orama_clean($_POST['date'] ?? 'Not specified', 80);
+$message = orama_clean($_POST['message'] ?? '', 5000);
+$captcha = orama_clean($_POST['g-recaptcha-response'] ?? '', 4000);
+
+if ($name === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    orama_fail(400, 'Please provide a valid name and email address.');
+}
+
+if ($secret !== '') {
+    if ($captcha === '') {
+        orama_fail(400, 'Please complete the captcha and try again.');
+    }
+    $verify = @file_get_contents('https://www.google.com/recaptcha/api/siteverify?' . http_build_query([
+        'secret' => $secret,
+        'response' => $captcha,
+        'remoteip' => $ip,
+    ]));
+    $parsed = json_decode((string) $verify);
+    if (!$parsed || empty($parsed->success)) {
+        orama_fail(400, 'Captcha check failed. Please try again.');
     }
 }
 
-// Compose Email
-$subject = "New Enquiry from $name - $site_name";
+$body = "Name: $name\nEmail: $email\nPhone / WhatsApp: $phone\nService: $service\nDate: $date\n\n$message\n";
+$headers = [
+    'From: Orama Media <' . FROM_EMAIL . '>',
+    'Reply-To: ' . $email,
+    'MIME-Version: 1.0',
+    'Content-Type: text/plain; charset=UTF-8',
+];
+$subject = 'New enquiry from ' . $name;
+$sent = @mail(
+    TO_EMAIL,
+    '=?UTF-8?B?' . base64_encode($subject) . '?=',
+    $body,
+    implode("\r\n", $headers),
+    '-f' . FROM_EMAIL
+);
 
-$email_content = "Name: $name\n";
-$email_content .= "Email: $email\n";
-$email_content .= "Phone / WhatsApp: $phone\n";
-$email_content .= "Service Required: $service\n";
-$email_content .= "Event / Campaign Date: $date\n\n";
-$email_content .= "Message / Story Details:\n$message\n";
-
-$headers = "From: noreply@oramamedia.co.zw\r\n";
-$headers .= "Reply-To: $email\r\n";
-$headers .= "X-Mailer: PHP/" . phpversion();
-
-// Send Mail
-$mail_sent = @mail($to_email, $subject, $email_content, $headers);
-
-if ($mail_sent) {
-    echo json_encode([
-        'status'  => 'success',
-        'message' => 'Thank you! Your enquiry has been received by Orama Media. We will reply within 12 hours.'
-    ]);
-} else {
-    // Return success to client even if mail local send fails on test environments
-    echo json_encode([
-        'status'  => 'success',
-        'message' => 'Thank you! Your enquiry has been logged successfully.'
-    ]);
+if (!$sent) {
+    orama_fail(502, 'The message could not be sent. Please try again shortly.');
 }
+
+echo json_encode([
+    'status' => 'success',
+    'message' => 'Thank you. Your enquiry has been sent to Orama Media.',
+]);

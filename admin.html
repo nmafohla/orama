@@ -305,7 +305,7 @@
           <a href="portfolio.html">Portfolio</a>
           <a href="pricing.html">Pricing</a>
           <a href="blog.html">Insights</a>
-          <a href="admin.html">Admin</a>
+          
         </div>
       </div>
       <div class="footer__col">
@@ -325,12 +325,12 @@
       <div class="footer__legal">
         <a href="privacy.html">Privacy Policy</a>
         <a href="terms.html">Terms &amp; Conditions</a>
-        <a href="admin.html" style="color: var(--color-accent);">Admin Portal</a>
+        
       </div>
     </div>
   </footer>
 
-  <script src="js/main.js?v=4"></script>
+  <script src="js/main.js?v=5"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const loginPanel = document.getElementById('login-panel');
@@ -348,25 +348,18 @@
 
       // Check Auth Status
       const checkAuth = () => {
-        if (sessionStorage.getItem('orama_admin_auth') === 'true') {
-          loginPanel.style.display = 'none';
-          dashboardPanel.style.display = 'block';
-          renderProjectsTable();
-        } else {
-          loginPanel.style.display = 'block';
-          dashboardPanel.style.display = 'none';
-        }
+        loginPanel.style.display = 'block';
+        dashboardPanel.style.display = 'none';
       };
 
       // Login handler
       loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const pwd = document.getElementById('admin-password').value;
-        if (pwd === 'oramamedia') {
-          sessionStorage.setItem('orama_admin_auth', 'true');
-          loginAlert.style.display = 'none';
-          checkAuth();
+        if (pwd === '' ) {
+          loginAlert.style.display = 'block';
         } else {
+          loginAlert.textContent = 'This page is closed.';
           loginAlert.style.display = 'block';
         }
       });
