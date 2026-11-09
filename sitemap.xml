@@ -1,61 +1,73 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://orama-media.vercel.app/</loc>
+    <loc>https://oramamedia.co.zw/</loc>
     <lastmod>2026-08-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://orama-media.vercel.app/about.html</loc>
+    <loc>https://oramamedia.co.zw/about.html</loc>
     <lastmod>2026-08-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://orama-media.vercel.app/services.html</loc>
+    <loc>https://oramamedia.co.zw/services.html</loc>
     <lastmod>2026-08-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://orama-media.vercel.app/portfolio.html</loc>
+    <loc>https://oramamedia.co.zw/portfolio.html</loc>
     <lastmod>2026-08-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://orama-media.vercel.app/pricing.html</loc>
+    <loc>https://oramamedia.co.zw/pricing.html</loc>
     <lastmod>2026-08-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://orama-media.vercel.app/blog.html</loc>
+    <loc>https://oramamedia.co.zw/blog.html</loc>
     <lastmod>2026-08-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://orama-media.vercel.app/contact.html</loc>
+    <loc>https://oramamedia.co.zw/contact.html</loc>
     <lastmod>2026-08-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://orama-media.vercel.app/blog-post-1.html</loc>
+    <loc>https://oramamedia.co.zw/blog-post-1.html</loc>
     <lastmod>2026-08-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://orama-media.vercel.app/privacy.html</loc>
+    <loc>https://oramamedia.co.zw/blog-post-2.html</loc>
+    <lastmod>2026-11-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://oramamedia.co.zw/blog-post-3.html</loc>
+    <lastmod>2026-11-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://oramamedia.co.zw/privacy.html</loc>
     <lastmod>2026-08-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://orama-media.vercel.app/terms.html</loc>
+    <loc>https://oramamedia.co.zw/terms.html</loc>
     <lastmod>2026-08-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
