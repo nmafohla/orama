@@ -7,7 +7,54 @@ document.addEventListener('DOMContentLoaded', () => {
   initPortfolioFilter();
   initIntersectionObserverFallback();
   initFormSubmissions();
+  initLazyVideos();
 });
+
+/* ----------------------------------------------------
+   LAZY VIDEOS: videos marked data-lazy-video keep their
+   <source data-src> unset until they come near the viewport,
+   so the page does not download every MP4 on first load.
+   ---------------------------------------------------- */
+function initLazyVideos() {
+  const videos = document.querySelectorAll('video[data-lazy-video]');
+  if (!videos.length) return;
+  const load = (video) => {
+    video.querySelectorAll('source[data-src]').forEach((source) => {
+      source.src = source.getAttribute('data-src');
+      source.removeAttribute('data-src');
+    });
+    video.removeAttribute('data-lazy-video');
+    video.load();
+    if (video.autoplay) {
+      const playPromise = video.play();
+      if (playPromise && playPromise.catch) playPromise.catch(() => {});
+    }
+  };
+  const visibleVideos = [];
+  videos.forEach((video) => {
+    if (video.getAttribute('data-lazy-video') === 'after-load') {
+      // Above-the-fold background video: wait until the page and poster have loaded.
+      const start = () => setTimeout(() => load(video), 300);
+      if (document.readyState === 'complete') start();
+      else window.addEventListener('load', start, { once: true });
+    } else {
+      visibleVideos.push(video);
+    }
+  });
+  if (!('IntersectionObserver' in window)) {
+    visibleVideos.forEach(load);
+    return;
+  }
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        observer.unobserve(entry.target);
+        load(entry.target);
+      }
+    });
+  }, { rootMargin: '200px 0px' });
+  visibleVideos.forEach((video) => observer.observe(video));
+}
 
 /* ----------------------------------------------------
    FORM SUBMISSION HANDLER (Sends to hello@oramamedia.co.zw)
@@ -50,6 +97,7 @@ function initFormSubmissions() {
 
       let successMsg = 'Thank you! Your enquiry has been sent directly to hello@oramamedia.co.zw. Our team will contact you within 12 hours.';
 
+      let sent = false;
       try {
         const response = await fetch('contact.php', {
           method: 'POST',
@@ -60,6 +108,7 @@ function initFormSubmissions() {
           throw new Error(result.message || 'Could not send the enquiry.');
         }
         if (result.message) successMsg = result.message;
+        sent = true;
       } catch (err) {
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -73,6 +122,8 @@ function initFormSubmissions() {
           submitBtn.textContent = originalText;
         }
 
+        // Only show the success state when contact.php confirmed the send.
+        if (!sent) return;
         const dialog = form.closest('dialog');
         if (dialog) {
           dialog.close();

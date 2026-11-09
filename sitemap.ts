@@ -6,7 +6,7 @@ export interface SitemapRoute {
 }
 
 export default function sitemap(): SitemapRoute[] {
-  const baseUrl = 'https://orama-media.vercel.app';
+  const baseUrl = 'https://oramamedia.co.zw';
   const currentDate = new Date().toISOString().split('T')[0];
 
   return [

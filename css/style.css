@@ -1620,3 +1620,6 @@
     font-size: 0.75rem;
   }
 }
+
+/* Mobile: stop decorative glows from widening the page (audit 9 Nov 2026, 375px overflow) */
+html{overflow-x:clip}
